@@ -3,10 +3,9 @@
 const express = require("express");
 const app = express();
 const port = 5000;
-const bodyParser = require("body-parser");
-
-const config = require("./config/key");
-const { User } = require("./models/User");
+const bodyParser = require("body-parser"); //정보 넘기고 받기 위해 body parser
+const config = require("./config/key"); //보안처리 불러옴
+const { User } = require("./models/User"); //모델 불러옴
 
 //bodyparser는 클라이언트에서 오는 정보를 서버에서 분석해서 가져올수있게 해줌
 //application/x-www-form- 이런걸 분석해서 가져옴
@@ -30,7 +29,7 @@ mongoose
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 app.get("/", (req, res) => {
-  res.send("Hello World Park Juhyun さまd요요 씨발년아");
+  res.send("Hello World Park Juhyun さま");
 });
 
 app.post("/register", (req, res) => {
@@ -41,6 +40,23 @@ app.post("/register", (req, res) => {
     return res.status(200).json({ success: true }); //status(200)이건 성공했다는 거임
   });
   //회원가입할때 필요한 정보들은 client에서 가져오면 그것들은 데이터베이스에 넣어준다.
+});
+
+app.post("/login", (req, res) => {
+  //요청된 이메일을 데이터베이스에 있는지 확인한다. findOne은 몽고DB의 메소드임
+  User.findOne({ email: req.body.email }, (err, user) => {
+    if (!user) {
+      //해당하는 유저가 없을경우
+      return res.json({ loginSuccess: false, message: "제공된 이메일에 해당하는 유저가 없습니다." });
+    }
+    //요청한 이메일이 데이터베이스에 있으면 비밀번호가 맞는 비밀번호 인지 확인, compare이건 이름 자유임. 단 User.js도 바꾸기
+    user.comparePassword(req.body.password, (err, isMatch) => {
+      //!isMatch 비밀번호가 틀렸다는거
+      if (!isMatch) return res.json({ loginSuccess: false, message: "비밀번호가 틀렸습니다" });
+      //비밀번호 까지 맞다면 토큰을 생성하기
+      user.generateToken((err, user) => {}); //gen이름 마음대로
+    });
+  });
 });
 
 app.listen(port, () => console.log(`Connection Success Click = ( http://localhost:${port} )`));
