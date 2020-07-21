@@ -3,6 +3,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
+var jwt = require("jsonwebtoken");
 
 const userSchema = mongoose.Schema({
   name: {
@@ -51,14 +52,28 @@ userSchema.pre("save", function (next) {
   }
 });
 
-userSchema.method.comparePassword = function (plainPassword, cb) {
+userSchema.methods.comparePassword = function (plainPassword, cb) {
   //plainPassword 1234567, 암호화된 비밀번호 $2b$10$nNI6z1gDSt4qi73Ki0Y7W.IlZDb/l/PXn6C
   //앞에 비밀번호를 해쉬화 해서 데이터 베이스에 있는 복잡한 문자, 해쉬 비밀번호랑 비교해야함
   bcrypt.compare(plainPassword, this.password, function (err, isMatch) {
-    //비밀번호가 같지 않다. 콜백 cb(err)를 줌, 그리고 비밀번호가 비교후 같다. 에러 없고(null), isMatch가 true가 되고, indexjs 53으로
-    if (err) return cb(err), cb(null, isMatch);
+    //비밀번호가 같지 않다. 콜백 cb(err)를 줌, 그리고 비밀번호가 비교후 같다.
+    //에러 없고(null), isMatch가 true가 되고, indexjs 53으로
+    if (err) return cb(err);
+    cb(null, isMatch);
   });
 };
+
+userSchema.methods.generateToken = function (cb) {
+  var user = this;
+  //jsonwebtoekn을 이용해서 token을 생성하기.
+  var token = jwt.sign(user._id.toHexString(), "secretToken"); //.id는 몽고 DB안에 있는 id임 자동생성인듯 , secretToken 임의 지정
+  //user._id + "secretToken" = token; //위에 토큰관련 schema가 있다.
+  user.token = token;
+  user.save(function (err, user) {
+    if (err) return cb(err);
+    cb(null, user); //뒤 user에서 index.js로 정보 전달.
+  });
+}; //cb는 콜백
 
 const User = mongoose.model("User", userSchema);
 //Schema를 모델로 감싸줘야함.
