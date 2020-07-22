@@ -5,6 +5,7 @@ const port = 5000;
 const bodyParser = require("body-parser"); //정보 넘기고 받기 위해 body parser
 const cookieParser = require("cookie-parser");
 const config = require("./config/key"); //보안처리 불러옴
+const { auth } = require("./middleware/auth");
 const { User } = require("./models/User"); //모델 불러옴
 
 //bodyparser는 클라이언트에서 오는 정보를 서버에서 분석해서 가져올수있게 해줌
@@ -32,7 +33,7 @@ app.get("/", (req, res) => {
   res.send("Hello World Park Juhyun さま");
 });
 
-app.post("/register", (req, res) => {
+app.post("/api/users/register", (req, res) => {
   const user = new User(req.body);
   //밑에 이건 몽고DB에서 오는 메소드
   user.save((err, userInfo) => {
@@ -60,6 +61,30 @@ app.post("/api/users/login", (req, res) => {
         //토큰을 저장한다. 어디에? 쿠키, 로컬스토리지 F12 눌르면 Local storage랑 쿠키 있음, 여기서는 쿠키, 로컬도 장점있고 다 그런거지
         res.cookie("x_auth", user.token).status(200).json({ loginSuccess: true, userId: user._id });
       });
+    });
+  });
+});
+
+app.get("/api/users/auth", auth, (req, res) => {
+  //여기까지 미들웨어를 통과해 왔다는 이야기는 Authentication 이 True라는 말.
+  res.status(200).json({
+    _id: req.user._id, // 이게 가능한 이유는 Auth.js 15에서 했기 때문
+    isAdmin: req.user.role === 0 ? false : true, //Role 1 어드민, ROle 2 특정부서어드민, Role 0 일반유저
+    isAuth: true,
+    email: req.user.email,
+    name: req.user.name,
+    lastname: req.user.lastname,
+    role: req.user.role,
+    image: req.user.image,
+  });
+});
+
+app.get("/api/users/logout", auth, (req, res) => {
+  // console.log('req.user', req.user)
+  User.findOneAndUpdate({ _id: req.user._id }, { token: "" }, (err, user) => {
+    if (err) return res.json({ success: false, err });
+    return res.status(200).send({
+      success: true,
     });
   });
 });

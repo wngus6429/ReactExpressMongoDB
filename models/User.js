@@ -28,8 +28,12 @@ const userSchema = mongoose.Schema({
     default: 0, //아무것도 안하면 0을 줌
   }, //어떤 유저가 관리자가 되는지, 일반 유저가 되는지
   image: String,
-  token: { type: String },
-  tokenExp: { type: Number }, //토큰 유효기한
+  token: {
+    type: String,
+  },
+  tokenExp: {
+    type: Number,
+  }, //토큰 유효기한
 });
 
 //비밀번호 암호화  npm install bcrypt
@@ -74,6 +78,20 @@ userSchema.methods.generateToken = function (cb) {
     cb(null, user); //뒤 user에서 index.js로 정보 전달.
   });
 }; //cb는 콜백
+
+userSchema.statics.findByToken = function (token, cb) {
+  var user = this;
+  //  user._id + "secretToken" = token;
+  //토큰을 decode 한다.
+  jwt.verify(token, "secretToken", function (err, decoded) {
+    //유저 아이디를 이용해서 유저를 찾은 다음에
+    //클라이언트에서 가져온 token 과 DB에 보관된 토큰이 일치하는지 확인
+    user.findOne({ _id: decoded, token: token }, function (err, user) {
+      if (err) return cb(err); //findOne 몽고 DB
+      cb(null, user); //에러가 없다면 유저 정보를 전달
+    });
+  });
+};
 
 const User = mongoose.model("User", userSchema);
 //Schema를 모델로 감싸줘야함.
