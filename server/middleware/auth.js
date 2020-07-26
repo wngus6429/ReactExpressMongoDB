@@ -2,7 +2,7 @@
 
 const { User } = require("../models/User");
 
-//인증 처리를 하는곳
+//인증 처리를 하는곳, 로그인 하면 토큰을 주는거고, 로그아웃 하면 토큰 ""가 되는거
 let auth = (req, res, next) => {
   //클라이언트 쿠키에서 토큰을 가져옴
   let token = req.cookies.x_auth;

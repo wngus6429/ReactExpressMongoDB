@@ -69,7 +69,8 @@ app.post("/api/users/login", (req, res) => {
 });
 
 app.get("/api/users/auth", auth, (req, res) => {
-  //여기까지 미들웨어를 통과해 왔다는 이야기는 Authentication 이 True라는 말.
+  //중간 auth 에서 로그인한 유저인지 판별 들웨어를 통과해 왔다는 이야기는 Authentication 이 True라는 말.
+  //
   res.status(200).json({
     _id: req.user._id, // 이게 가능한 이유는 Auth.js 15에서 했기 때문
     isAdmin: req.user.role === 0 ? false : true, //Role 1 어드민, ROle 2 특정부서어드민, Role 0 일반유저

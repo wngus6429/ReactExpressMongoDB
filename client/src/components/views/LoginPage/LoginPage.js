@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { loginUser } from "../../../_actions/user_action";
+import { withRouter } from "react-router-dom";
 
 function LoginPage(props) {
   const dispatch = useDispatch();
@@ -22,6 +23,7 @@ function LoginPage(props) {
     //console.log(Password);
     let body = { email: Email, password: Password };
     dispatch(loginUser(body)).then((response) => {
+      //user_action으로 넘어감
       //dispatch 로그인 한 다음에 다음 화면으로 넘어가야지?
       if (response.payload.loginSuccess) {
         props.history.push("/");
@@ -59,4 +61,4 @@ function LoginPage(props) {
   );
 }
 
-export default LoginPage;
+export default withRouter(LoginPage);
